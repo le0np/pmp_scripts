@@ -1,1 +1,0 @@
-for domain in $(cat domains.txt); do plesk bin subscription --remove $domain; done
