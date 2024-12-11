@@ -66,10 +66,10 @@ generate_password() {
     local admin_pass special_char_count
     while true; do
         # Generate a password with the specified character set
-        admin_pass=$(tr -dc 'A-Za-z0-9!@#$?%^&*_~' < /dev/urandom | head -c 16)
+        admin_pass=$(tr -dc 'A-Za-z0-9!#$%&()*-<>?@^_~' < /dev/urandom | head -c 16)
         
         # Count the number of special characters
-        special_char_count=$(echo "$admin_pass" | grep -o '[!@#$?%^&*_~]' | wc -l)
+        special_char_count=$(echo "$admin_pass" | grep -o '[!#$%&()*-<>?@^_~]' | wc -l)
         
         # Ensure the first character is not a special character and special characters are limited to 2-3
         if [[ ${admin_pass:0:1} =~ [A-Za-z0-9] && $special_char_count -ge 2 && $special_char_count -le 5 ]]; then
@@ -122,7 +122,7 @@ for domain in $(cat "$domains"); do
       # Install WordPress
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
 
-    # Example function to generate randomized URL structure (commented out):
+      # Function to generate randomized URL structure:
       random_url_structure() {
        local structures=(
          "/%category%/%postname%/"
@@ -139,12 +139,14 @@ for domain in $(cat "$domains"); do
          "/%author%/%year%/%post_id%/"
     #     "/%tag%/%post_id%/"
        )
-    #   echo "${structures[RANDOM % ${#structures[@]}]}"
+       echo "${structures[RANDOM % ${#structures[@]}]}"
       }
 
-     # Need to add theme installation  
-     # wp theme install $theme --activate --allow-root 
-     
+      url_structure=$(random_url_structure)
+      wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      #wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+
       # Initialize SSL installation retry counter
       ssl_retries=0
       ssl_install_success=false
