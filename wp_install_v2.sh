@@ -122,9 +122,16 @@ for domain in $(cat "$domains"); do
       # Install WordPress
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
 
-      # Need to add randomized URL structure, something like this: 
-     #wp rewrite structure '/%category%/%postname%/' 
-     # install theme 
+    # Need to add randomized URL structure. Structure should be different for every website.
+    # Example function to generate randomized URL structure (commented out):
+      random_url_structure() {
+        local structures=("/%category%/%postname%/" "/%year%/%monthnum%/%postname%/" "/%author%/%postname%/")
+        echo "${structures[RANDOM % ${#structures[@]}]}"
+      }
+      url_structure=$(random_url_structure)
+      wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+
+     # Need to add theme installation  
      # wp theme install $theme --activate --allow-root 
      
       # Initialize SSL installation retry counter
