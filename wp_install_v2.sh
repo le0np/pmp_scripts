@@ -72,7 +72,7 @@ generate_password() {
         special_char_count=$(echo "$admin_pass" | grep -o '[!#$%&()*-<>?@^_~]' | wc -l)
         
         # Ensure the first character is not a special character and special characters are limited to 2-3
-        if [[ ${admin_pass:0:1} =~ [A-Za-z0-9] && $special_char_count -ge 2 && $special_char_count -le 5 ]]; then
+        if [[ ${admin_pass:0:1} =~ [A-Za-z0-9] && $special_char_count -ge 2 && $special_char_count -le 3 ]]; then
             echo "$admin_pass"
             return
         fi
