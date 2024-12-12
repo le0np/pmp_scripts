@@ -2,12 +2,15 @@
 
 # Step 1: Extract domain names
 echo "Extracting domain names..."
-MYSQL_PWD=$(cat /etc/psa/.psa.shadow)
-if ! mysql psa -uadmin -Ne "SELECT name FROM domains WHERE htype='vrt_hst'" > /root/list.txt; then
-  echo "Error: Failed to fetch domains from the psa database."
+MYSQL_PWD=$(cat /etc/psa/.psa.shadow) mysql psa -uadmin -Ne "SELECT name FROM domains WHERE htype='vrt_hst'" > /root/list.txt
+
+# Check the exit status of the MySQL command
+if [ $? -eq 0 ]; then
+  echo "Domain list saved to /root/list.txt"
+else
+  echo "Error: Failed to fetch domains from the PSA database."
   exit 1
 fi
-echo "Domain list saved to /root/list.txt"
 
 # Step 2: Create php.txt file
 echo "Creating /root/php.txt with open_basedir configuration..."

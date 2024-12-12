@@ -122,11 +122,31 @@ for domain in $(cat "$domains"); do
       # Install WordPress
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
 
-      # Need to add randomized URL structure, something like this: 
-     #wp rewrite structure '/%category%/%postname%/' 
-     # install theme 
-     # wp theme install $theme --activate --allow-root 
-     
+      # Function to generate randomized URL structure:
+      random_url_structure() {
+       local structures=(
+         "/%category%/%postname%/"
+         "/%year%/%monthnum%/%postname%/"
+         "/%author%/%postname%/"
+         "/%post_id%/%postname%/"
+         "/%year%/%postname%/"
+         "/%monthnum%/%day%/%postname%/"
+         "/%category%/%year%/%postname%/"
+    #     "/%tag%/%postname%/"
+         "/%postname%/"
+    #     "/%year%/%monthnum%/%day%/%hour%/%postname%/"
+         "/%category%/%post_id%/"
+         "/%author%/%year%/%post_id%/"
+    #     "/%tag%/%post_id%/"
+       )
+       echo "${structures[RANDOM % ${#structures[@]}]}"
+      }
+
+      url_structure=$(random_url_structure)
+      wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      #wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+
       # Initialize SSL installation retry counter
       ssl_retries=0
       ssl_install_success=false
