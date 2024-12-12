@@ -144,7 +144,7 @@ for domain in $(cat "$domains"); do
 
       url_structure=$(random_url_structure)
       wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-      #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
       #wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
 
       # Initialize SSL installation retry counter
