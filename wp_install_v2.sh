@@ -144,9 +144,29 @@ for domain in $(cat "$domains"); do
 
       url_structure=$(random_url_structure)
       wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-      wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
       #wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-
+    
+      # Creating .htaccess files for domain
+      htaccess_file="/var/www/vhosts/$domain/httpdocs/.htaccess"
+      if [ ! -f "$htaccess_file" ]; then
+        cat > "$htaccess_file" <<EOL
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+EOL
+        echo ".htaccess file created at /var/www/vhosts/$domain/httpdocs/"
+      else
+        echo ".htaccess file already exists at /var/www/vhosts/$domain/httpdocs/"
+      fi
+      
       # Initialize SSL installation retry counter
       ssl_retries=0
       ssl_install_success=false
