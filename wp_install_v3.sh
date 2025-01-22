@@ -53,8 +53,7 @@ letsencrypt_log="letsencrypt.log"
 # Assign IP address 
 ip=$(hostname -I | awk '{print $1}')
 
-# Database and SSL configurations
-db_host="localhost"
+#SSL configurations
 read -p "Enter email for SSL install: " ssl_email
 
 # Create or clear the credentials.txt file and letsencrypt log file
@@ -91,6 +90,7 @@ for domain in $(cat "$domains"); do
   db_name="wp_${domain//./_}"
   db_user="user_${domain//./_}"
   db_password=$(openssl rand -base64 20)
+  db_host="localhost:3306"
 
   # Create website subscription
   admin_user="pmp_admin_$random_string"
@@ -103,6 +103,10 @@ for domain in $(cat "$domains"); do
   service_plan="Default Domain"
   create_output=$(plesk bin subscription --create $domain -service-plan "$service_plan" -ip "$ip" -login "$admin_user" -passwd "$admin_pass" 2>&1)
 
+  # Use Plesk command to create the database and user, and associate them with the domain
+  plesk bin database --create "$db_name" -domain "$domain" -type mysql
+  plesk bin database --create-dbuser "$db_user" -passwd "$db_password" -domain "$domain" -server "$db_host" -database "$db_name"
+  
   # Check if domain creation succeeded
   if [[ "$create_output" == *"SUCCESS"* ]]; then
     subscription_id=$(plesk bin subscription --list | grep -E "$domain" | awk '{print $1}')
@@ -115,14 +119,10 @@ for domain in $(cat "$domains"); do
       sed -e "s#localhost#$db_host#; s#database_name_here#$db_name#; s#username_here#$db_user#; s#password_here#$db_password#" \
       /var/www/vhosts/"$domain"/httpdocs/wp-config-sample.php > /var/www/vhosts/"$domain"/httpdocs/wp-config.php
       echo "Configured wp-config.php for $domain" | tee -a credentials.txt
-
+      
       # Install WordPress
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
-
-      # Use Plesk command to create the database and user, and associate them with the domain
-      plesk bin database --create "$db_name" -domain "$domain" -type mysql
-      plesk bin database --create-dbuser "$db_user" -passwd "$db_password" -domain "$domain" -server "$db_host" -database "$db_name"
-      
+  
       # Function to generate randomized URL structure:
       random_url_structure() {
        local structures=(
