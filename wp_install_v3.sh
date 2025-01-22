@@ -106,6 +106,8 @@ for domain in $(cat "$domains"); do
   # Use Plesk command to create the database and user, and associate them with the domain
   plesk bin database --create "$db_name" -domain "$domain" -type mysql
   plesk bin database --create-dbuser "$db_user" -passwd "$db_password" -domain "$domain" -server "$db_host" -database "$db_name"
+  plesk bin database --assign-to-subscription "$db_name" -domain "$domain" -server "$db_host"
+
   
   # Check if domain creation succeeded
   if [[ "$create_output" == *"SUCCESS"* ]]; then
