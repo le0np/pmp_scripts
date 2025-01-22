@@ -92,10 +92,6 @@ for domain in $(cat "$domains"); do
   db_user="user_${domain//./_}"
   db_password=$(openssl rand -base64 20)
 
-  # Use Plesk command to create the database and user, and associate them with the domain
-  plesk bin database --create "$db_name" -domain "$domain" -type mysql
-  plesk bin database --create-dbuser "$db_user" -passwd "$db_password" -domain "$domain" -server "$db_host" -database "$db_name"
-
   # Create website subscription
   admin_user="pmp_admin_$random_string"
   
@@ -123,6 +119,10 @@ for domain in $(cat "$domains"); do
       # Install WordPress
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
 
+      # Use Plesk command to create the database and user, and associate them with the domain
+      plesk bin database --create "$db_name" -domain "$domain" -type mysql
+      plesk bin database --create-dbuser "$db_user" -passwd "$db_password" -domain "$domain" -server "$db_host" -database "$db_name"
+      
       # Function to generate randomized URL structure:
       random_url_structure() {
        local structures=(
