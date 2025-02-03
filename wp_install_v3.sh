@@ -87,9 +87,9 @@ for domain in $(cat "$domains"); do
   random_string=$(tr -dc 'a-z0-9' < /dev/urandom | head -c 8)  # Adjust the length as needed
 
   # Generate database name and user
-  db_name="wp_${domain//./_}"
-  db_user="user_${domain//./_}"
-  db_password=$(openssl rand -base64 20)
+  db_name="$random_string"
+  db_user="user_$random_string"
+  db_password=$(openssl rand -base64 25 | head -c 20)
   db_host="localhost:3306"
 
   # Create website subscription
@@ -128,19 +128,16 @@ for domain in $(cat "$domains"); do
       # Function to generate randomized URL structure:
       random_url_structure() {
        local structures=(
-         "/%category%/%postname%/"
+        # "/%category%/%postname%/" Only for original websites
          "/%year%/%monthnum%/%postname%/"
          "/%author%/%postname%/"
          "/%post_id%/%postname%/"
          "/%year%/%postname%/"
          "/%monthnum%/%day%/%postname%/"
          "/%category%/%year%/%postname%/"
-    #     "/%tag%/%postname%/"
          "/%postname%/"
-    #     "/%year%/%monthnum%/%day%/%hour%/%postname%/"
          "/%category%/%post_id%/"
          "/%author%/%year%/%post_id%/"
-    #     "/%tag%/%post_id%/"
        )
        echo "${structures[RANDOM % ${#structures[@]}]}"
       }
