@@ -89,7 +89,7 @@ for domain in $(cat "$domains"); do
 
   # Generate database name and user
   db_name="$short_random_string_$random_string"
-  db_user="$short_random_string_$random_string"
+  db_user="$random_string"
   db_password=$(openssl rand -base64 25 | head -c 20)
   db_host="localhost:3306"
 
