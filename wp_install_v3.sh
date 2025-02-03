@@ -85,10 +85,11 @@ max_retries=3
 for domain in $(cat "$domains"); do
   # Generate random string for the admin username
   random_string=$(tr -dc 'a-z0-9' < /dev/urandom | head -c 8)  # Adjust the length as needed
+  short_random_string=$(tr -dc 'a-z0-9' < /dev/urandom | head -c 2) # Adjust the length as needed
 
   # Generate database name and user
-  db_name="$random_string"
-  db_user="user_$random_string"
+  db_name="$short_random_string_$random_string"
+  db_user="$short_random_string_$random_string"
   db_password=$(openssl rand -base64 25 | head -c 20)
   db_host="localhost:3306"
 
