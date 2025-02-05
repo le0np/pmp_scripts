@@ -26,7 +26,7 @@ def list_and_delete_old_records(zone_id):
     print("\n*** Existing DNS Records ***")
     for i, record in enumerate(dns_records, start=1):
         print(f"{i}. {record['type']} - {record['name']} -> {record['content']}")
-    print("\nSelect the types of DNS records to delete:")
+    print("\nSelect the types of DNS records to DELETE:")
     print("(1)  A       (2)  CNAME")
     print("(3)  TXT     (4)  MX")
     print("(5)  AAAA    (6)  NS")
@@ -80,7 +80,7 @@ def add_dns_record(zone_id, record):
 def get_user_dns_records():
     user_dns_records = []
     while True:
-        print("\nSelect the type of DNS record to add:")
+        print("\nSelect the type of DNS record to ADD:")
         print("(1)  A       (2)  CNAME")
         print("(3)  TXT     (4)  MX")
         print("(5)  AAAA    (6)  NS")
