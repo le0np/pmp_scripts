@@ -53,8 +53,7 @@ letsencrypt_log="letsencrypt.log"
 # Assign IP address 
 ip=$(hostname -I | awk '{print $1}')
 
-# Database and SSL configurations
-db_host="localhost"
+#SSL configurations
 read -p "Enter email for SSL install: " ssl_email
 
 # Create or clear the credentials.txt file and letsencrypt log file
@@ -86,14 +85,13 @@ max_retries=3
 for domain in $(cat "$domains"); do
   # Generate random string for the admin username
   random_string=$(tr -dc 'a-z0-9' < /dev/urandom | head -c 8)  # Adjust the length as needed
+  short_random_string=$(tr -dc 'a-z0-9' < /dev/urandom | head -c 2) # Adjust the length as needed
 
   # Generate database name and user
-  db_name="wp_${domain//./_}"
-  db_user="user_${domain//./_}"
-  db_password=$(openssl rand -base64 20)
-
-  # Set up database and user
-  mysql -e "CREATE DATABASE IF NOT EXISTS \`$db_name\`; GRANT ALL ON \`$db_name\`.* TO '$db_user'@'$db_host' IDENTIFIED BY '$db_password'; FLUSH PRIVILEGES;" | tee -a credentials.txt
+  db_name="$short_random_string_$random_string"
+  db_user="$random_string"
+  db_password=$(openssl rand -base64 25 | head -c 20)
+  db_host="localhost:3306"
 
   # Create website subscription
   admin_user="pmp_admin_$random_string"
@@ -106,6 +104,12 @@ for domain in $(cat "$domains"); do
   service_plan="Default Domain"
   create_output=$(plesk bin subscription --create $domain -service-plan "$service_plan" -ip "$ip" -login "$admin_user" -passwd "$admin_pass" 2>&1)
 
+  # Use Plesk command to create the database and user, and associate them with the domain
+  plesk bin database --create "$db_name" -domain "$domain" -type mysql
+  plesk bin database --create-dbuser "$db_user" -passwd "$db_password" -domain "$domain" -server "$db_host" -database "$db_name"
+  plesk bin database --assign-to-subscription "$db_name" -domain "$domain" -server "$db_host"
+
+  
   # Check if domain creation succeeded
   if [[ "$create_output" == *"SUCCESS"* ]]; then
     subscription_id=$(plesk bin subscription --list | grep -E "$domain" | awk '{print $1}')
@@ -118,33 +122,30 @@ for domain in $(cat "$domains"); do
       sed -e "s#localhost#$db_host#; s#database_name_here#$db_name#; s#username_here#$db_user#; s#password_here#$db_password#" \
       /var/www/vhosts/"$domain"/httpdocs/wp-config-sample.php > /var/www/vhosts/"$domain"/httpdocs/wp-config.php
       echo "Configured wp-config.php for $domain" | tee -a credentials.txt
-
+      
       # Install WordPress
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
-
+  
       # Function to generate randomized URL structure:
       random_url_structure() {
        local structures=(
-         "/%category%/%postname%/"
+        # "/%category%/%postname%/" Only for original websites
          "/%year%/%monthnum%/%postname%/"
          "/%author%/%postname%/"
          "/%post_id%/%postname%/"
          "/%year%/%postname%/"
          "/%monthnum%/%day%/%postname%/"
          "/%category%/%year%/%postname%/"
-    #     "/%tag%/%postname%/"
          "/%postname%/"
-    #     "/%year%/%monthnum%/%day%/%hour%/%postname%/"
          "/%category%/%post_id%/"
          "/%author%/%year%/%post_id%/"
-    #     "/%tag%/%post_id%/"
        )
        echo "${structures[RANDOM % ${#structures[@]}]}"
       }
 
       url_structure=$(random_url_structure)
       wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-      wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
       #wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
     
       # Creating .htaccess files for domain
