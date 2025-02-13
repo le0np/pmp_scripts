@@ -181,6 +181,7 @@ EOL
           
           echo "SSL successfully installed for $domain and www.$domain" | tee -a "$letsencrypt_log"
           ssl_install_success=true
+          plesk bin subscription --add-custom-plan-item $domain -custom-plan-item-name "urn:ext:sslit:plan-item-sdk:keep-secured"
           echo ""
         else
           # Log the failure and retry
