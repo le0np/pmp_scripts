@@ -150,6 +150,8 @@ for domain in $(cat "$domains"); do
       wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
       #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
       wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root # Testubg to see if correct structure is applied
+      # Shuffle salt and security keys in wp-config.php
+      wp config shuffle-salts --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
     
       # Creating .htaccess files for domain
       htaccess_file="/var/www/vhosts/$domain/httpdocs/.htaccess"
