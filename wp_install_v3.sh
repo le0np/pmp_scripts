@@ -13,6 +13,41 @@
 #set -e  # Stop on errors
 #set -x  # Print commands as they execute (for debugging)
 
+# Function to generate randomized URL structure:
+      random_url_structure() {
+       local structures=(
+         "/%category%/%postname%/"
+         "/%year%/%monthnum%/%postname%/"
+         "/%author%/%postname%/"
+         "/%post_id%/%postname%/"
+         "/%year%/%postname%/"
+         "/%monthnum%/%day%/%postname%/"
+         "/%category%/%year%/%postname%/"
+         "/%postname%/"
+         "/%category%/%post_id%/"
+         "/%author%/%year%/%post_id%/"
+       )
+       echo "${structures[RANDOM % ${#structures[@]}]}"
+      }
+      
+# Function to generate a valid password
+generate_password() {
+    local admin_pass special_char_count
+    while true; do
+        # Generate a password with the specified character set
+        admin_pass=$(tr -dc 'A-Za-z0-9!#$%&()*-<>?@^_~' < /dev/urandom | head -c 16)
+        
+        # Count the number of special characters
+        special_char_count=$(echo "$admin_pass" | grep -o '[!#$%&()*-<>?@^_~]' | wc -l)
+        
+        # Ensure the first character is not a special character and special characters are limited to 2-3
+        if [[ ${admin_pass:0:1} =~ [A-Za-z0-9] && $special_char_count -ge 2 && $special_char_count -le 4 ]]; then
+            echo "$admin_pass"
+            return
+        fi
+    done
+}
+
 # Update packages 
 apt update -y && apt upgrade -y
 
@@ -20,9 +55,9 @@ apt update -y && apt upgrade -y
 if command -v php &> /dev/null; then
     echo -e "PHP-CLI is already installed.\n"
 else
-    # Install PHP 7.4 CLI
+    # Install PHP 8.1 CLI
     echo "Installing PHP-CLI ....."
-    apt install php7.4-cli -y | tee -a credentials.txt
+    apt install php8.1-cli -y | tee -a credentials.txt
 fi
 
 # Check if wp-cli is already installed
@@ -60,36 +95,22 @@ read -p "Enter email for SSL install: " ssl_email
 > credentials.txt
 > "$letsencrypt_log"  # Corrected to use the variable and ensure the file is created
 
-# Function to generate a valid password
-generate_password() {
-    local admin_pass special_char_count
-    while true; do
-        # Generate a password with the specified character set
-        admin_pass=$(tr -dc 'A-Za-z0-9!#$%&()*-<>?@^_~' < /dev/urandom | head -c 16)
-        
-        # Count the number of special characters
-        special_char_count=$(echo "$admin_pass" | grep -o '[!#$%&()*-<>?@^_~]' | wc -l)
-        
-        # Ensure the first character is not a special character and special characters are limited to 2-3
-        if [[ ${admin_pass:0:1} =~ [A-Za-z0-9] && $special_char_count -ge 2 && $special_char_count -le 3 ]]; then
-            echo "$admin_pass"
-            return
-        fi
-    done
-}
-
 # Maximum number of retries for SSL installation
 max_retries=3
+
+# URL structure to use
+url_structure=$(random_url_structure)
+echo "URL structure to use is: $url_structure"
 
 # Loop through each domain
 for domain in $(cat "$domains"); do
   # Generate random string for the admin username
   random_string=$(tr -dc 'a-z0-9' < /dev/urandom | head -c 8)  # Adjust the length as needed
-  short_random_string=$(tr -dc 'a-z0-9' < /dev/urandom | head -c 2) # Adjust the length as needed
+  random_string2=$(tr -dc 'a-z0-9' < /dev/urandom | head -c 10) # Adjust the length as needed
 
   # Generate database name and user
-  db_name="$short_random_string_$random_string"
-  db_user="$random_string"
+  db_name="$random_string"
+  db_user="$random_string2"
   db_password=$(openssl rand -base64 25 | head -c 20)
   db_host="localhost:3306"
 
@@ -126,27 +147,9 @@ for domain in $(cat "$domains"); do
       # Install WordPress
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
   
-      # Function to generate randomized URL structure:
-      random_url_structure() {
-       local structures=(
-        # "/%category%/%postname%/" Only for original websites
-         "/%year%/%monthnum%/%postname%/"
-         "/%author%/%postname%/"
-         "/%post_id%/%postname%/"
-         "/%year%/%postname%/"
-         "/%monthnum%/%day%/%postname%/"
-         "/%category%/%year%/%postname%/"
-         "/%postname%/"
-         "/%category%/%post_id%/"
-         "/%author%/%year%/%post_id%/"
-       )
-       echo "${structures[RANDOM % ${#structures[@]}]}"
-      }
-
-      url_structure=$(random_url_structure)
       wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
       #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-      #wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root # Testubg to see if correct structure is applied
     
       # Creating .htaccess files for domain
       htaccess_file="/var/www/vhosts/$domain/httpdocs/.htaccess"
@@ -181,6 +184,7 @@ EOL
           
           echo "SSL successfully installed for $domain and www.$domain" | tee -a "$letsencrypt_log"
           ssl_install_success=true
+          # Enable option to keep website secure with SSL 
           plesk bin subscription --add-custom-plan-item $domain -custom-plan-item-name "urn:ext:sslit:plan-item-sdk:keep-secured"
           echo ""
         else
