@@ -55,9 +55,12 @@ apt update -y && apt upgrade -y
 if command -v php &> /dev/null; then
     echo -e "PHP-CLI is already installed.\n"
 else
-    # Install PHP 8.1 CLI
+    # Install PHP 8.3 CLI
     echo "Installing PHP-CLI ....."
-    apt install php8.1-cli -y | tee -a credentials.txt
+    apt install -y software-properties-common ca-certificates lsb-release apt-transport-https
+    add-apt-repository ppa:ondrej/php -y
+    apt update
+    apt install php8.3-cli -y | tee -a credentials.txt
 fi
 
 # Check if wp-cli is already installed
