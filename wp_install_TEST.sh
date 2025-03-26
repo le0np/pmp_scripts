@@ -108,11 +108,9 @@ for domain in $(cat "$domains"); do
 
   # Check if domain creation succeeded
   if [[ "$create_output" == *"SUCCESS"* ]]; then
-    subscription_id=$(plesk bin subscription --list | grep -E "$domain" | awk '{print $1}')
-
-    if [ -n "$subscription_id" ]; then
-      # Download wp-config-sample.php
-      wp core download --path="/var/www/vhosts/$domain/httpdocs/" --allow-root | tee -a credentials.txt
+      wp_install_output=$(plesk ext wp-toolkit --wordpress --install -domain "$domain" --path "httpdocs" --title "$title" --admin-user "$admin_user" --admin-password "$admin_pass" --admin-email "$email" 2>&1)
+      echo "$wp_install_output" | tee -a credentials.txt
+  fi
 
       # Updated to avoid tee after redirection
       sed -e "s#localhost#$db_host#; s#database_name_here#$db_name#; s#username_here#$db_user#; s#password_here#$db_password#" \
