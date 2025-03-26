@@ -121,9 +121,8 @@ for domain in $(cat "$domains"); do
   # Create website subscription
   admin_user="pmp_admin_$random_string"
   
-  # Generate a valid admin password using the function
+  # Generate a valid admin password using the function along with some other variables
   admin_pass=$(generate_password)
-  
   title="${domain%%.*}"
   email="info@$domain"
   service_plan="Default Domain"
