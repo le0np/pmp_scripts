@@ -248,3 +248,10 @@ EOL
     echo -e "An error occurred during domain creation for $domain: $create_output\n" | tee -a credentials.txt
   fi
 done
+
+# Remove stuff installed for expireds
+apt remove --purge php-cli php8.*-cli -y
+apt autoremove -y
+add-apt-repository --remove ppa:ondrej/php -y
+apt update
+rm -f /usr/local/bin/wp
