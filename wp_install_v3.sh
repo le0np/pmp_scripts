@@ -152,10 +152,9 @@ for domain in $(cat "$domains"); do
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
   
       wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-      #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-      wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root # Testubg to see if correct structure is applied
-      # Shuffle sal and security keys in wp-config.php
-      wp config shuffle-salts --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      #wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root # Testing to see if correct structure is applied
+      wp config shuffle-salts --path="/var/www/vhosts/$domain/httpdocs/" --allow-root  # Shuffle keys in wp-config.php
     
       # Creating .htaccess files for domain
       htaccess_file="/var/www/vhosts/$domain/httpdocs/.htaccess"
