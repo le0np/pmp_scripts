@@ -79,7 +79,7 @@ fi
 if ! dpkg -s php-mysql &> /dev/null; then
     # Install php-mysql
     echo "Installing PHP-MYSQL ....."
-    apt install php-mysql -y | tee -a credentials.txt
+    apt install php8.3-mysql -y | tee -a credentials.txt
 else
     echo -e "php-mysql is already installed.\n" | tee -a credentials.txt
 fi
