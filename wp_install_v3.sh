@@ -13,6 +13,41 @@
 #set -e  # Stop on errors
 #set -x  # Print commands as they execute (for debugging)
 
+# Function to generate randomized URL structure:
+      random_url_structure() {
+       local structures=(
+         "/%category%/%postname%/"
+         "/%year%/%monthnum%/%postname%/"
+         "/%author%/%postname%/"
+         "/%post_id%/%postname%/"
+         "/%year%/%postname%/"
+         "/%monthnum%/%day%/%postname%/"
+         "/%category%/%year%/%postname%/"
+         "/%postname%/"
+         "/%category%/%post_id%/"
+         "/%author%/%year%/%post_id%/"
+       )
+       echo "${structures[RANDOM % ${#structures[@]}]}"
+      }
+      
+# Function to generate a valid password
+generate_password() {
+    local admin_pass special_char_count
+    while true; do
+        # Generate a password with the specified character set
+        admin_pass=$(tr -dc 'A-Za-z0-9!#$%&()*-<>?@^_~' < /dev/urandom | head -c 16)
+        
+        # Count the number of special characters
+        special_char_count=$(echo "$admin_pass" | grep -o '[!#$%&()*-<>?@^_~]' | wc -l)
+        
+        # Ensure the first character is not a special character and special characters are limited to 2-3
+        if [[ ${admin_pass:0:1} =~ [A-Za-z0-9] && $special_char_count -ge 2 && $special_char_count -le 4 ]]; then
+            echo "$admin_pass"
+            return
+        fi
+    done
+}
+
 # Update packages 
 apt update -y && apt upgrade -y
 
@@ -63,41 +98,6 @@ read -p "Enter email for SSL install: " ssl_email
 # Create or clear the credentials.txt file and letsencrypt log file
 > credentials.txt
 > "$letsencrypt_log"  # Corrected to use the variable and ensure the file is created
-
-# Function to generate randomized URL structure:
-      random_url_structure() {
-       local structures=(
-         "/%category%/%postname%/"
-         "/%year%/%monthnum%/%postname%/"
-         "/%author%/%postname%/"
-         "/%post_id%/%postname%/"
-         "/%year%/%postname%/"
-         "/%monthnum%/%day%/%postname%/"
-         "/%category%/%year%/%postname%/"
-         "/%postname%/"
-         "/%category%/%post_id%/"
-         "/%author%/%year%/%post_id%/"
-       )
-       echo "${structures[RANDOM % ${#structures[@]}]}"
-      }
-      
-# Function to generate a valid password
-generate_password() {
-    local admin_pass special_char_count
-    while true; do
-        # Generate a password with the specified character set
-        admin_pass=$(tr -dc 'A-Za-z0-9!#$%&()*-<>?@^_~' < /dev/urandom | head -c 16)
-        
-        # Count the number of special characters
-        special_char_count=$(echo "$admin_pass" | grep -o '[!#$%&()*-<>?@^_~]' | wc -l)
-        
-        # Ensure the first character is not a special character and special characters are limited to 2-3
-        if [[ ${admin_pass:0:1} =~ [A-Za-z0-9] && $special_char_count -ge 2 && $special_char_count -le 4 ]]; then
-            echo "$admin_pass"
-            return
-        fi
-    done
-}
 
 # Maximum number of retries for SSL installation
 max_retries=3
