@@ -51,17 +51,53 @@ generate_password() {
 # Update packages 
 apt update -y && apt upgrade -y
 
+#!/bin/bash
+
 # Check if PHP-CLI is already installed
 if command -v php &> /dev/null; then
     echo -e "PHP-CLI is already installed.\n"
 else
+    echo "Select the version of PHP-CLI to install:"
+    echo "1) php-8.0-cli"
+    echo "2) php-8.1-cli"
+    echo "3) php-8.2-cli"
+    echo "4) php-8.3-cli"
+    echo "5) php-8.4-cli"
+    
+    # Read user input
+    read -p "Enter the number of the PHP version to install (1-5): " php_choice
+
     # Install requirements and add repository
     apt install software-properties-common -y
     add-apt-repository ppa:ondrej/php -y
     apt update
-    # Install PHP 8.3 CLI
-    echo "Installing PHP-CLI ....."
-    apt install php8.3-cli -y | tee -a credentials.txt
+
+    # Install chosen PHP-CLI version
+    case "$php_choice" in
+        1)
+            echo "Installing php-8.0-cli..."
+            apt install php8.0-cli -y | tee -a credentials.txt
+            ;;
+        2)
+            echo "Installing php-8.1-cli..."
+            apt install php8.1-cli -y | tee -a credentials.txt
+            ;;
+        3)
+            echo "Installing php-8.2-cli..."
+            apt install php8.2-cli -y | tee -a credentials.txt
+            ;;
+        4)
+            echo "Installing php-8.3-cli..."
+            apt install php8.3-cli -y | tee -a credentials.txt
+            ;;
+        5)
+            echo "Installing php-8.4-cli..."
+            apt install php8.4-cli -y | tee -a credentials.txt
+            ;;
+        *)
+            echo "Invalid selection. Please select a number between 1 and 5."
+            ;;
+    esac
 fi
 
 # Check if wp-cli is already installed
