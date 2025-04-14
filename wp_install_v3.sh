@@ -55,11 +55,12 @@ apt update -y && apt upgrade -y
 if command -v php &> /dev/null; then
     echo -e "PHP-CLI is already installed.\n"
 else
-    # Install PHP 8.3 CLI
-    echo "Installing PHP-CLI ....."
-    apt install -y software-properties-common ca-certificates lsb-release apt-transport-https
+    # Install requirements and add repository
+    apt install software-properties-common -y
     add-apt-repository ppa:ondrej/php -y
     apt update
+    # Install PHP 8.3 CLI
+    echo "Installing PHP-CLI ....."
     apt install php8.3-cli -y | tee -a credentials.txt
 fi
 
@@ -79,7 +80,7 @@ fi
 if ! dpkg -s php-mysql &> /dev/null; then
     # Install php-mysql
     echo "Installing PHP-MYSQL ....."
-    apt install php8.3-mysql -y | tee -a credentials.txt
+    apt install php-mysql -y | tee -a credentials.txt
 else
     echo -e "php-mysql is already installed.\n" | tee -a credentials.txt
 fi
@@ -120,9 +121,8 @@ for domain in $(cat "$domains"); do
   # Create website subscription
   admin_user="pmp_admin_$random_string"
   
-  # Generate a valid admin password using the function
+  # Generate a valid admin password using the function along with some other variables
   admin_pass=$(generate_password)
-  
   title="${domain%%.*}"
   email="info@$domain"
   service_plan="Default Domain"
@@ -151,10 +151,9 @@ for domain in $(cat "$domains"); do
       wp core install --path="/var/www/vhosts/$domain/httpdocs/" --url="https://$domain" --title="$title" --admin_user="$admin_user" --admin_password="$admin_pass" --admin_email="$email" --allow-root | tee -a credentials.txt
   
       wp rewrite structure "$url_structure" --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-      #wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
-      wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root # Testubg to see if correct structure is applied
-      # Shuffle salt and security keys in wp-config.php
-      wp config shuffle-salts --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      wp rewrite flush --path="/var/www/vhosts/$domain/httpdocs/" --allow-root
+      #wp option get permalink_structure --path="/var/www/vhosts/$domain/httpdocs/" --allow-root # Testing to see if correct structure is applied
+      wp config shuffle-salts --path="/var/www/vhosts/$domain/httpdocs/" --allow-root  # Shuffle keys in wp-config.php
     
       # Creating .htaccess files for domain
       htaccess_file="/var/www/vhosts/$domain/httpdocs/.htaccess"
@@ -247,3 +246,10 @@ EOL
     echo -e "An error occurred during domain creation for $domain: $create_output\n" | tee -a credentials.txt
   fi
 done
+
+# Remove stuff installed for expireds
+apt remove --purge php-cli php8.*-cli -y
+apt autoremove -y
+add-apt-repository --remove ppa:ondrej/php -y
+apt update
+rm -f /usr/local/bin/wp
